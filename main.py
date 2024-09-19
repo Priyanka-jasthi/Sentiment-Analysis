@@ -42,14 +42,22 @@ df.columns
 df.shape
 df.info()
 
-#processing date and time data
+# Converting 'date' column to datetime
 df["date"] = pd.to_datetime(df["date"])
-df["date"] = df["date"].dt.tz_localize("UTC")
+
+# Checking if the date is already tz-aware, if not, localize to UTC
+if df["date"].dt.tz is None:
+    df["date"] = df["date"].dt.tz_localize("UTC")
+
+# Converting the timezone to 'Europe/Istanbul'
 df["date"] = df["date"].dt.tz_convert("Europe/Istanbul")
-#extracting month name
+
+# Extracting the month name
 df['month'] = df['date'].dt.month_name()
-#converting tweet text to lowercase
+
+# Converting tweet text to lowercase
 df["tweet"] = df["tweet"].str.lower()
+
 
 df.info()
 
@@ -164,7 +172,7 @@ def summary(df, col_name, plot=False, save_plots=False):
     # Plot distribution if plot=True
     if plot:
         plt.figure(figsize=(10, 6))
-        ax = sns.countplot(x=col_name, data=df_filtered, palette="viridis")
+        ax = sns.countplot(x=col_name, data=df_filtered, palette="magma")
         ax.set_title(f"{col_name.capitalize()} Distribution in Negative Tweets")
         ax.set_xlabel(col_name.capitalize())
         ax.set_ylabel("Count")
@@ -550,3 +558,4 @@ predictions = log_model.predict(tweet_tfidf)
 df_tweet_21["label"] = predictions
 
 df_tweet_21.head()
+
