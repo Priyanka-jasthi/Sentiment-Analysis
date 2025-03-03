@@ -46,10 +46,4 @@ This project focuses on sentiment analysis of tweets using natural language proc
 - Deploy the model using **Flask/Streamlit** for real-time predictions.
 - Integrate Twitter API for live sentiment analysis.
 
-## License
-This project is licensed under the MIT License.
-
----
-Contributions and feedback are welcome! 😊
-
 
