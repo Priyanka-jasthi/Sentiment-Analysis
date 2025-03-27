@@ -2,6 +2,20 @@
 
 ## Project Overview
 This project focuses on sentiment analysis of tweets using natural language processing (NLP) and machine learning techniques. The goal is to classify tweets into three categories: **positive, negative, or neutral** sentiments.
+Dataset Story
+
+'tweet_labeled.csv' contains the tweets made in Twitter 2022, the dates of the tweets, and the labels as -1, 0 and 1 within the scope of the emotion contained in the tweets. 'tweets_21.csv' contains tweets from 2021.
+
+tweets_labeled.csv
+tweet_id: id information of tweet
+tweet: tweet content
+date: date and time of tweet
+label: Tag information based on the sentiment of the tweet (-1:negative, 0:neutral, 1:positive )
+
+tweets_21.csv
+tweet_id: id information of tweet
+tweet: tweet content
+date: date and time of tweet
 
 ## Features
 - Preprocessing of tweet text (removal of stopwords, special characters, etc.)
