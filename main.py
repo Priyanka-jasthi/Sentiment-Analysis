@@ -1,4 +1,3 @@
-
 #importing libraries
 
 #pip install nltk
@@ -9,20 +8,12 @@
 
 from warnings import filterwarnings
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import nltk
-nltk.download('wordnet')
-nltk.download('omw-1.4')
+#nltk.download('wordnet')
+#nltk.download('omw-1.4')
 import seaborn as sns
-from PIL import Image
 from nltk.corpus import stopwords
-from nltk.sentiment import SentimentIntensityAnalyzer
-from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score, GridSearchCV, cross_validate, train_test_split
 from sklearn.metrics import classification_report
 from sklearn.preprocessing import LabelEncoder
 from textblob import Word, TextBlob
@@ -59,7 +50,7 @@ df['month'] = df['date'].dt.month_name()
 df["tweet"] = df["tweet"].str.lower()
 
 
-df.info()
+df
 
 #creating the variable seasons
 seasons = {'January': 'Winter',
@@ -83,7 +74,7 @@ df["days"] = [date.strftime('%A') for date in df["date"]]
 df["hour"] = df["date"].dt.hour
 
 df.head()
-
+df
 
 df['4hour_interval'] = (df['hour'] // 2) * 2
 
@@ -101,8 +92,8 @@ interval = {0: '0-2',
             22: '22-24'
             }
 df['4hour_interval'] = df['4hour_interval'].map(interval)
-
 df.head()
+df
 
 df["time_interval"] = df["4hour_interval"].replace({"0-2": "22-02",
                                                    "22-24": "22-02",
@@ -200,6 +191,8 @@ def summary(df, col_name, plot=False, save_plots=False):
 cols = ["time_interval", "days", "seasons"]
 for col in cols:
     summary(df, col, plot=True, save_plots=True)
+    
+    
 
 ###### Text preprocessing ############################
 #Lowercases, punctuation, numbers and newline characters
@@ -232,7 +225,7 @@ df["tweet"] = clean_text(df["tweet"])
 df["tweet"]
 
 
-nltk.download("stopwords")
+#nltk.download("stopwords")
 
 stop_words = stopwords.words("turkish")
 
@@ -314,81 +307,222 @@ def apply_lemmatization(df, column_name):
 df = apply_lemmatization(df, 'tweet')
 df["tweet"]
 
-#Calculation of Term Frequencies & Barplot & Word Cloud
+# Data Visualization
+'''
+Barplot: Barplot is a type of graph used to visualise categorical data. It is often used to show frequencies 
+or relationships of frequently occurring categorical values.
 
-def plot_tf_and_wordcloud(df, column_name, tf_threshold=2000, max_font_size=50, max_words=100, background_color="black"):
-    """
-    Calculate term frequency (TF) and generate a word cloud for a specified column in a pandas DataFrame.
+Word Cloud: Word Cloud is a type of chart used to visualise text data and highlight the importance of certain words.
+They are visually represented in different sizes and colours according to the frequency of the words in the text.
+'''
+# 1. Term Frequency Calculation and Bar Chart
+tf = df["tweet"].apply(lambda x: pd.value_counts(x.split(" "))).sum(axis=0).reset_index()
+tf.columns = ["words", "tf"]
+tf[tf["tf"] > 500].plot.bar(x="words", y="tf")
+plt.show()
 
-    This function performs two main tasks:
-    1. Term Frequency Calculation and Bar Chart: Calculates the frequency of each word in the specified column and plots a bar chart for words with a frequency above a certain threshold.
-    2. Word Cloud Generation: Generates and displays a word cloud based on the text in the specified column.
-
-    Parameters:
-    df (pandas.DataFrame): A pandas DataFrame containing the text data.
-    column_name (str): The name of the column to analyze.
-    tf_threshold (int): The threshold for term frequency to be included in the bar chart.
-    max_font_size (int): Maximum font size for the word cloud.
-    max_words (int): The maximum number of words for the word cloud.
-    background_color (str): Background color for the word cloud.
-
-    Returns:
-    None: This function only plots the results and does not return any value.
-    """
-    # 1. Term Frequency Calculation and Bar Chart
-    tf = df[column_name].apply(lambda x: pd.value_counts(x.split(" "))).sum(axis=0).reset_index()
-    tf.columns = ["words", "tf"]
-    high_tf = tf[tf["tf"] > tf_threshold]
-    
-    plt.figure(figsize=(12, 6))
-    ax = high_tf.plot.bar(x="words", y="tf", title="Term Frequency Bar Chart", legend=False, color='skyblue')
-    ax.set_xlabel("Words")
-    ax.set_ylabel("Frequency")
-    
-    # Add value labels on each bar
-    for p in ax.patches:
-        ax.annotate(str(p.get_height()), (p.get_x() * 1.005, p.get_height() * 1.005))
-
-    plt.xticks(rotation=45)
-    plt.show()
-
-    # 2. Word Cloud Generation
-    text = " ".join(i for i in df[column_name])
-    wordcloud = WordCloud(max_font_size=max_font_size, max_words=max_words, background_color=background_color).generate(text)
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation="bilinear")
-    plt.title("Word Cloud")
-    plt.axis("off")
-    plt.show()
-plot_tf_and_wordcloud(df, 'tweet')
+# 2. Word Cloud Generation
+text = " ".join(i for i in df.tweet)
+wordcloud = WordCloud(max_font_size=100, max_words= 1000, background_color= "black").generate(text)
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud, interpolation="bilinear")
+plt.title("Word Cloud")
+plt.axis("off")
+plt.show()
 
 
 #Sentiment Analysis
+
 df["label"] = LabelEncoder().fit_transform(df["label"])
 df.head()
 
 df.dropna(axis=0, inplace=True)
 
 #TF-IDF Word Level
-
+'''TF-IDF Word Level is a measure used to determine the importance of a term within a document, and this measure 
+is based on the frequency of the term within the document and its prevalence across all documents.
+'''
 tf_idfVectorizer = TfidfVectorizer()
 
 X = tf_idfVectorizer.fit_transform(df["tweet"])
 y = df["label"]
 
-#Modelling
-############## Logistic Regression #################
+# Define the mapping between numerical labels and their original string values
+label_mapping = {0: 'negative', 1: 'neutral', 2: 'positive'}  # Adjust if your LabelEncoder used a different order
 
-log_model = LogisticRegression(max_iter=10000).fit(X, y)
+# Create the 'sentiment' column
+df['sentiment'] = df['label'].map(label_mapping)
 
-# Cross Validation
-cross_val_score(log_model,
-                X,
-                y,
-                scoring="accuracy",
-                cv=10).mean()
+# Verify
+print(df[['label', 'sentiment']].head())
+# Heatmap(Exploring interactions between time of day and season.)
+heatmap_data = pd.crosstab(df['time_interval'], df['seasons'], values=df['sentiment'], aggfunc='count')
+plt.figure(figsize=(12, 8))
+sns.heatmap(heatmap_data, annot=True, fmt="d", cmap="YlGnBu")
+plt.title('Tweet Volume by Time Interval and Season')
+plt.xlabel('Season')
+plt.ylabel('Time Interval')
+plt.show()
 
+#Comparing sentiment distribution across seasons.
+seasonal_sentiment = df.groupby(['seasons', 'sentiment']).size().unstack()
+seasonal_sentiment.plot(kind='bar', stacked=True, figsize=(10, 6))
+plt.title('Sentiment Distribution by Season')
+plt.xlabel('Season')
+plt.xticks(rotation=45)
+plt.show()
 
+#################### Model Building ########################
+
+'''from sklearn.svm import SVC
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score, GridSearchCV
+import pandas as pd
+
+# Define models and their parameter grids for tuning
+models = {
+    "Logistic Regression": {
+        "model": LogisticRegression(max_iter=10000),
+        "params": {
+            'C': [0.1, 1, 10],
+            'solver': ['lbfgs', 'saga']
+        }
+    },
+    "Random Forest": {
+        "model": RandomForestClassifier(random_state=42),
+        "params": {
+            'n_estimators': [100, 200],
+            'max_depth': [None, 10, 20]
+        }
+    },
+    "SVM": {
+        "model": SVC(),
+        "params": {
+            'C': [0.1, 1, 10],
+            'kernel': ['linear', 'rbf']
+        }
+    },
+    "Naive Bayes": {
+        "model": MultinomialNB(),
+        "params": {
+            'alpha': [0.1, 1, 10]
+        }
+    }
+}
+
+# Store results
+cv_scores = {}
+best_scores = {}
+best_params = {}
+
+# Perform cross-validation for baseline performance
+for model_name, model_config in models.items():
+    print(f"\n=== Cross-Validation for {model_name} ===")
+    cv_score = cross_val_score(model_config["model"], X, y, cv=10, scoring='accuracy', n_jobs=-1)
+    mean_cv_score = cv_score.mean()
+    cv_scores[model_name] = mean_cv_score
+    print(f"Mean CV Accuracy: {mean_cv_score:.4f}")
+
+# Hyperparameter tuning using GridSearchCV
+for model_name, model_config in models.items():
+    print(f"\n=== Tuning {model_name} ===")
+    grid_search = GridSearchCV(
+        estimator=model_config["model"],
+        param_grid=model_config["params"],
+        cv=10,
+        scoring='accuracy',
+        n_jobs=-1
+    )
+    grid_search.fit(X, y)
+    
+    best_scores[model_name] = grid_search.best_score_
+    best_params[model_name] = grid_search.best_params_
+    
+    print(f"Best Accuracy: {grid_search.best_score_:.4f}")
+    print(f"Best Parameters: {grid_search.best_params_}")
+
+# Compare models
+results_df = pd.DataFrame({
+    'Model': best_scores.keys(),
+    'Baseline CV Accuracy': cv_scores.values(),
+    'Tuned Accuracy': best_scores.values(),
+    'Best Parameters': best_params.values()
+}).sort_values(by='Tuned Accuracy', ascending=False)
+
+print("\n=== Final Model Comparison ===")
+print(results_df)
+
+# Identify and print the best model
+best_model_name = results_df.iloc[0]['Model']
+best_model_accuracy = results_df.iloc[0]['Tuned Accuracy']
+best_model_params = results_df.iloc[0]['Best Parameters']
+
+print(f"\nBest Model: {best_model_name}")
+print(f"Tuned Accuracy: {best_model_accuracy:.4f}")
+print(f"Best Parameters: {best_model_params}")
+'''
+
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import pandas as pd
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Initialize SVM model with best parameters
+svm_model = SVC(C=1, kernel='rbf', random_state=42)
+
+# Train the model
+svm_model.fit(X_train, y_train)
+
+# Evaluate on test data
+y_pred = svm_model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Test Accuracy: {accuracy:.4f}")
+
+# Display classification report and confusion matrix
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+# Perform cross-validation
+cv_scores = cross_val_score(svm_model, X, y, cv=10, scoring='accuracy', n_jobs=-1)
+print(f"\nCross-Validation Mean Accuracy: {cv_scores.mean():.4f}")
+
+'''
+Test Accuracy: 69.06% – The model correctly predicts labels for approximately 69% of the test data.
+
+Cross-Validation Accuracy: 66.97% – This suggests the model performs consistently across different data splits.
+
+Classification Report:
+Class 1 (Majority Class) is well predicted with 98% recall, meaning almost all actual Class 1 instances are correctly classified.
+
+Class 0 & Class 2 suffer from low recall (13% and 17%, respectively), meaning many instances of these classes are misclassified.
+
+Precision is higher than recall for Class 0 & Class 2, indicating the model is more confident when it does predict these classes but often fails to identify them.
+
+Confusion Matrix Insights:
+Class 1 is dominant: Most of its predictions are correct (1657 out of 1690).
+
+Class 0 & Class 2 are often misclassified as Class 1, leading to an imbalance issue in prediction.
+
+Key Takeaways & Next Steps:
+The model is biased towards Class 1, likely due to an imbalance in the dataset.
+
+Improving Class 0 & Class 2 predictions could involve:
+
+Handling class imbalance (e.g., oversampling/undersampling).
+
+Using different metrics (e.g., F1-score, balanced accuracy).
+
+Trying other kernels or feature engineering to improve separability.
+
+'''
 
 # Twitter 2021 data
 
@@ -504,58 +638,29 @@ df_tweet_21 = apply_lemmatization(df_tweet_21, 'tweet')
 df_tweet_21["tweet"]
 
 
-
-def plot_tf_and_wordcloud(df, column_name, tf_threshold=2000, max_font_size=50, max_words=100, background_color="black"):
-    """
-    Calculate term frequency (TF) and generate a word cloud for a specified column in a pandas DataFrame.
-
-    This function performs two main tasks:
-    1. Term Frequency Calculation and Bar Chart: Calculates the frequency of each word in the specified column and plots a bar chart for words with a frequency above a certain threshold.
-    2. Word Cloud Generation: Generates and displays a word cloud based on the text in the specified column.
-
-    Parameters:
-    df (pandas.DataFrame): A pandas DataFrame containing the text data.
-    column_name (str): The name of the column to analyze.
-    tf_threshold (int): The threshold for term frequency to be included in the bar chart.
-    max_font_size (int): Maximum font size for the word cloud.
-    max_words (int): The maximum number of words for the word cloud.
-    background_color (str): Background color for the word cloud.
-
-    Returns:
-    None: This function only plots the results and does not return any value.
-    """
-    # 1. Term Frequency Calculation and Bar Chart
-    tf = df[column_name].apply(lambda x: pd.value_counts(x.split(" "))).sum(axis=0).reset_index()
-    tf.columns = ["words", "tf"]
-    high_tf = tf[tf["tf"] > tf_threshold]
+# 1. Term Frequency Calculation and Bar Chart
+tf = df_tweet_21["tweet"].apply(lambda x: pd.value_counts(x.split(" "))).sum(axis=0).reset_index()
+tf.columns = ["words", "tf"]
+tf[tf["tf"] > 500].plot.bar(x="words", y="tf")
+plt.show()
     
-    plt.figure(figsize=(12, 6))
-    ax = high_tf.plot.bar(x="words", y="tf", title="Term Frequency Bar Chart", legend=False, color='skyblue')
-    ax.set_xlabel("Words")
-    ax.set_ylabel("Frequency")
-    
-    # Add value labels on each bar
-    for p in ax.patches:
-        ax.annotate(str(p.get_height()), (p.get_x() * 1.005, p.get_height() * 1.005))
-
-    plt.xticks(rotation=45)
-    plt.show()
-
-    # 2. Word Cloud Generation
-    text = " ".join(i for i in df[column_name])
-    wordcloud = WordCloud(max_font_size=max_font_size, max_words=max_words, background_color=background_color).generate(text)
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation="bilinear")
-    plt.title("Word Cloud")
-    plt.axis("off")
-    plt.show()
-plot_tf_and_wordcloud(df_tweet_21, 'tweet')
+# 2. Word Cloud Generation
+text = " ".join(i for i in df_tweet_21.tweet)
+wordcloud = WordCloud(max_font_size=100, max_words= 1000, background_color= "black").generate(text)
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud, interpolation="bilinear")
+plt.title("Word Cloud")
+plt.axis("off")
+plt.show()
 
 # Prediction
-
 tweet_tfidf = tf_idfVectorizer.transform(df_tweet_21["tweet"])
-predictions = log_model.predict(tweet_tfidf)
+predictions = svm_model.predict(tweet_tfidf)
 df_tweet_21["label"] = predictions
 
 df_tweet_21.head()
+
+
+
+
 
