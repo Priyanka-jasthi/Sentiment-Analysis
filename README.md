@@ -6,11 +6,11 @@ This project focuses on sentiment analysis of tweets using natural language proc
 **Dataset Story**
 'tweet_labeled.csv' contains the tweets made in Twitter 2022, the dates of the tweets, and the labels as -1, 0 and 1 within the scope of the emotion contained in the tweets. 'tweets_21.csv' contains tweets from 2021.
 
-tweets_labeled.csv\n
-tweet_id: id information of tweet\n
-tweet: tweet content\n
-date: date and time of tweet\n
-label: Tag information based on the sentiment of the tweet (-1:negative, 0:neutral, 1:positive )\n
+tweets_labeled.csv
+tweet_id: id information of tweet
+tweet: tweet content
+date: date and time of tweet
+label: Tag information based on the sentiment of the tweet (-1:negative, 0:neutral, 1:positive)
 
 tweets_21.csv
 tweet_id: id information of tweet
